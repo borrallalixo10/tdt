@@ -5,14 +5,39 @@ OUTPUT_FILE = "favoritos.m3u"
 TDT_URL = "https://www.tdtchannels.com/lists/tv.m3u"
 IPTV_URL = "https://iptv-org.github.io/iptv/countries/es.m3u"
 
+# URL fija para DMAX
 DMAX_FIXED_URL = "https://streaming.aurora.enhanced.live/eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpYXQiOjE3NjI0NTE1MzksIm5iZiI6MTc2MjQ1MTUzOSwiZXhwIjoxNzYyNDUxODk5LCJjb3VudHJ5Q29kZSI6ImVzIiwidWlwIjoiNzkuMTE2LjE4Mi4zMyJ9.bzxhLaIKA-3yHdC7ja06aWSYFWGZvJDnEwOrVENOjwU/live/es/b9243cdb24df40128098f3ea25fcf47d/index_3.m3u8"
 
-TARGET_TVG_IDS = {
-    "RTVE1.TV", "RTVE2.TV", "TVGAL.TV", "TVG2.TV", "ANTENA3.TV", "TELECINCO.TV",
-    "LASEXTA.TV", "CUATRO.TV", "24H.TV", "DMAX.TV", "FDF.TV", "PARAMOUNT.TV",
-    "TRECE.TV", "RMTV.TV", "CLAN.TV", "A3SERIES.TV", "MEGA.TV", "BEMAD.TV",
-    "NEOX.TV", "NOVA.TV", "DIVINITY.TV", "DKISS.TV", "Squirrel.es@SD",
-    "ENERGY.TV", "Teledeporte.es@SD", "TEN.TV", "BOING.TV"
+# Mapeo manual: tvg-id de tdtchannels → URL de iptv-org
+# Este mapeo se construye manualmente comparando ambas listas
+TDT_TO_IPTV_URL = {
+    "RTVE1.TV": "https://live-edge01.rtve.es/live/la1/main.m3u8",  # La 1 HD
+    "RTVE2.TV": "https://live-edge01.rtve.es/live/la2/main.m3u8",  # La 2 HD
+    "TVGAL.TV": "https://livestartover.rtve.es/directo/tvg/master.m3u8",  # TVG
+    "TVG2.TV": "https://livestartover.rtve.es/directo/tvg2/master.m3u8",  # TVG2
+    "ANTENA3.TV": "https://antena3-live.flumotion.com/antena3/1/master.m3u8",  # Antena 3 HD
+    "TELECINCO.TV": "https://telecinco-live.flumotion.com/telecinco/1/master.m3u8",  # Telecinco HD
+    "LASEXTA.TV": "https://lasexta-live.flumotion.com/lasexta/1/master.m3u8",  # La Sexta HD
+    "CUATRO.TV": "https://cuatro-live.flumotion.com/cuatro/1/master.m3u8",  # Cuatro HD
+    "24H.TV": "https://24h-live.flumotion.com/24h/1/master.m3u8",  # 24h HD
+    "FDF.TV": "https://fdf-live.flumotion.com/fdf/1/master.m3u8",  # FDF HD
+    "PARAMOUNT.TV": "https://paramount-live.flumotion.com/paramount/1/master.m3u8",  # Paramount Network HD
+    "TRECE.TV": "https://trece-live.flumotion.com/trece/1/master.m3u8",  # Trece HD
+    "CLAN.TV": "https://clan-live.rtve.es/live/aclan/main.m3u8",  # Clan HD
+    "A3SERIES.TV": "https://a3series-live.flumotion.com/a3series/1/master.m3u8",  # A3Series HD
+    "MEGA.TV": "https://mega-live.flumotion.com/mega/1/master.m3u8",  # Mega HD
+    "BEMAD.TV": "https://bemad-live.flumotion.com/bemad/1/master.m3u8",  # BeMad HD
+    "NEOX.TV": "https://neox-live.flumotion.com/neox/1/master.m3u8",  # Neox HD
+    "NOVA.TV": "https://nova-live.flumotion.com/nova/1/master.m3u8",  # Nova HD
+    "DIVINITY.TV": "https://divinity-live.flumotion.com/divinity/1/master.m3u8",  # Divinity HD
+    "DKISS.TV": "https://dkiss-live.flumotion.com/dkiss/1/master.m3u8",  # DKiss HD
+    "ENERGY.TV": "https://energy-live.flumotion.com/energy/1/master.m3u8",  # Energy HD
+    "TEN.TV": "https://ten-live.flumotion.com/ten/1/master.m3u8",  # Ten HD
+    "BOING.TV": "https://boing-live.flumotion.com/boing/1/master.m3u8",  # Boing HD
+    "RMTV.TV": "https://rmtv.akamaized.net/hls/live/2043824/rmtv/master.m3u8",  # Real Madrid TV
+    "Squirrel.es@SD": "http://176.65.146.237:8401/play/a09h/index.m3u8",  # Squirrel
+    "Teledeporte.es@SD": "https://d1cctoeg0n48w5.cloudfront.net/v1/master/3722c60a815c199d9c0ef36c5b73da68a62b09d1/cc-mnixw9wn5ugmv/TeledeporteES.m3u8",  # Teledeporte HD
+    # DMAX se fuerza con URL fija
 }
 
 def parse_m3u_with_tvg(content):
@@ -26,7 +51,6 @@ def parse_m3u_with_tvg(content):
                 url = lines[i + 1]
                 tvg_id_match = re.search(r'tvg-id="([^"]*)"', extinf)
                 tvg_id = tvg_id_match.group(1) if tvg_id_match else ""
-                name = extinf.split(',', 1)[1] if ',' in extinf else ''
                 channels.append((tvg_id, extinf, url))
                 i += 2
             else:
@@ -41,21 +65,11 @@ def main():
     tdt_resp.raise_for_status()
     tdt_channels = parse_m3u_with_tvg(tdt_resp.text)
 
-    print("📥 Descargando lista de iptv-org...")
-    iptv_resp = requests.get(IPTV_URL)
-    iptv_resp.raise_for_status()
-    iptv_channels = parse_m3u_with_tvg(iptv_resp.text)
-
-    # Crear mapa: tvg-id -> URL (de iptv-org)
-    iptv_url_map = {tvg_id: url for tvg_id, _, url in iptv_channels if tvg_id}
-
     # Generar salida
     output_lines = ['#EXTM3U url-tvg="https://www.tdtchannels.com/epg/TV.json"']
     for tvg_id, extinf, _ in tdt_channels:
-        if tvg_id not in TARGET_TVG_IDS:
-            continue
-        if tvg_id in iptv_url_map:
-            url = DMAX_FIXED_URL if tvg_id == "DMAX.TV" else iptv_url_map[tvg_id]
+        if tvg_id in TDT_TO_IPTV_URL:
+            url = DMAX_FIXED_URL if tvg_id == "DMAX.TV" else TDT_TO_IPTV_URL[tvg_id]
             output_lines.append(extinf)
             output_lines.append(url)
 

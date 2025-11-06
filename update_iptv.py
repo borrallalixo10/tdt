@@ -4,49 +4,63 @@ import re
 OUTPUT_FILE = "favoritos.m3u"
 SOURCE_URL = "https://iptv-org.github.io/iptv/countries/es.m3u"
 
-# Lista fija de canales deseados (normalizados)
-DESIRED_CHANNELS = {
-    "la 1", "la 2", "tvg", "antena 3", "telecinco", "la sexta", "cuatro", "24h",
-    "dmax", "fdf", "paramount network", "trece", "realmadrid tv", "clan",
-    "a3series", "mega", "bemad", "neox", "nova", "divinity", "dkiss",
-    "squirrel", "energy", "tdp", "ten", "boing", "tvg2"
+# Nombres EXACTOS como aparecen en iptv-org (después de la coma en #EXTINF)
+IPTV_ORG_NAMES = {
+    "La 1", "La 2", "TVG", "Antena 3", "Telecinco", "La Sexta", "Cuatro", "24h",
+    "DMAX", "FDF", "Paramount Network", "Trece", "Real Madrid TV", "Clan",
+    "A3Series", "Mega", "BeMad", "Neox", "Nova", "Divinity", "DKiss",
+    "Squirrel", "Energy", "Teledeporte", "Ten", "Boing", "TVG2"
 }
 
-# Mapeo tvg-id corregido
+# Mapeo: nombre en iptv-org → tvg-id
 TVD_ID_MAP = {
-    "la 1": "RTVE1.TV",
-    "la 2": "RTVE2.TV",
-    "tvg": "TVGAL.TV",
-    "tvg2": "TVG2.TV",
-    "antena 3": "ANTENA3.TV",
-    "telecinco": "TELECINCO.TV",
-    "la sexta": "LASEXTA.TV",
-    "cuatro": "CUATRO.TV",
+    "La 1": "RTVE1.TV",
+    "La 2": "RTVE2.TV",
+    "TVG": "TVGAL.TV",
+    "TVG2": "TVG2.TV",
+    "Antena 3": "ANTENA3.TV",
+    "Telecinco": "TELECINCO.TV",
+    "La Sexta": "LASEXTA.TV",
+    "Cuatro": "CUATRO.TV",
     "24h": "24H.TV",
-    "dmax": "DMAX.TV",
-    "fdf": "FDF.TV",
-    "paramount network": "PARAMOUNT.TV",
-    "trece": "TRECE.TV",
-    "realmadrid tv": "RMTV.TV",
-    "clan": "CLAN.TV",
-    "a3series": "A3SERIES.TV",
-    "mega": "MEGA.TV",
-    "bemad": "BEMAD.TV",
-    "neox": "NEOX.TV",
-    "nova": "NOVA.TV",
-    "divinity": "DIVINITY.TV",
-    "dkiss": "DKISS.TV",
-    "squirrel": "Squirrel.es@SD",
-    "energy": "ENERGY.TV",
-    "tdp": "Teledeporte.es@SD",
-    "ten": "TEN.TV",
-    "boing": "BOING.TV",
+    "DMAX": "DMAX.TV",
+    "FDF": "FDF.TV",
+    "Paramount Network": "PARAMOUNT.TV",
+    "Trece": "TRECE.TV",
+    "Real Madrid TV": "RMTV.TV",
+    "Clan": "CLAN.TV",
+    "A3Series": "A3SERIES.TV",
+    "Mega": "MEGA.TV",
+    "BeMad": "BEMAD.TV",
+    "Neox": "NEOX.TV",
+    "Nova": "NOVA.TV",
+    "Divinity": "DIVINITY.TV",
+    "DKiss": "DKISS.TV",
+    "Squirrel": "Squirrel.es@SD",
+    "Energy": "ENERGY.TV",
+    "Teledeporte": "Teledeporte.es@SD",
+    "Ten": "TEN.TV",
+    "Boing": "BOING.TV",
 }
 
-DMAX_URL = "https://streaming.aurora.enhanced.live/eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpYXQiOjE3NjI0NTE1MzksIm5iZiI6MTc2MjQ1MTUzOSwiZXhwIjoxNzYyNDUxODk5LCJjb3VudHJ5Q29kZSI6ImVzIiwidWlwIjoiNzkuMTE2LjE4Mi4zMyJ9.bzxhLaIKA-3yHdC7ja06aWSYFWGZvJDnEwOrVENOjwU/live/es/b9243cdb24df40128098f3ea25fcf47d/index_3.m3u8"
+# Logos
+def get_logo(name):
+    slug = name.lower().replace(" ", "").replace("real madrid tv", "realmadrid")
+    logo_map = {
+        "la1": "la1.png", "la2": "la2.png", "tvg": "tvg.png", "tvg2": "tvg2.png",
+        "antena3": "antena3.png", "telecinco": "telecinco.png", "lasexta": "lasexta.png",
+        "cuatro": "cuatro.png", "24h": "24h.png", "dmax": "dmax.png", "fdf": "fdf.png",
+        "paramountnetwork": "paramount.png", "trece": "trece.png", "realmadrid": "realmadrid.png",
+        "clan": "clan.png", "a3series": "a3series.png", "mega": "mega.png", "bemad": "bemad.png",
+        "neox": "neox.png", "nova": "nova.png", "divinity": "divinity.png", "dkiss": "dkiss.png",
+        "squirrel": "squirrel.png", "energy": "energy.png", "teledeporte": "tdp.png", "ten": "ten.png",
+        "boing": "boing.png"
+    }
+    key = re.sub(r'[^a-z0-9]', '', slug)
+    return "https://www.tdtchannels.com/logos/" + logo_map.get(key, "default.png")
 
-def clean_name(name):
-    return re.sub(r'\s+', ' ', name.strip().lower())
+# URL fija para DMAX
+DMAX_URL = "https://streaming.aurora.enhanced.live/eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpYXQiOjE3NjI0NTE1MzksIm5iZiI6MTc2MjQ1MTUzOSwiZXhwIjoxNzYyNDUxODk5LCJjb3VudHJ5Q29kZSI6ImVzIiwidWlwIjoiNzkuMTE2LjE4Mi4zMyJ9.bzxhLaIKA-3yHdC7ja06aWSYFWGZvJDnEwOrVENOjwU/live/es/b9243cdb24df40128098f3ea25fcf47d/index_3.m3u8"
 
 def parse_m3u(content):
     lines = content.strip().splitlines()
@@ -58,30 +72,13 @@ def parse_m3u(content):
                 extinf = lines[i]
                 url = lines[i + 1]
                 name = extinf.split(',', 1)[1] if ',' in extinf else ''
-                channels.append((clean_name(name), extinf, url))
+                channels.append((name, extinf, url))
                 i += 2
             else:
                 i += 1
         else:
             i += 1
     return channels
-
-def get_tvg_id(name_clean):
-    return TVD_ID_MAP.get(name_clean, name_clean.upper().replace(" ", "") + ".TV")
-
-def get_logo(name_clean):
-    base = "https://www.tdtchannels.com/logos/"
-    logo_map = {
-        "la 1": "la1.png", "la 2": "la2.png", "tvg": "tvg.png", "tvg2": "tvg2.png",
-        "antena 3": "antena3.png", "telecinco": "telecinco.png", "la sexta": "lasexta.png",
-        "cuatro": "cuatro.png", "24h": "24h.png", "dmax": "dmax.png", "fdf": "fdf.png",
-        "paramount network": "paramount.png", "trece": "trece.png", "clan": "clan.png",
-        "a3series": "a3series.png", "mega": "mega.png", "bemad": "bemad.png",
-        "neox": "neox.png", "nova": "nova.png", "divinity": "divinity.png",
-        "dkiss": "dkiss.png", "energy": "energy.png", "ten": "ten.png", "boing": "boing.png",
-        "realmadrid tv": "realmadrid.png", "squirrel": "squirrel.png", "tdp": "tdp.png"
-    }
-    return base + logo_map.get(name_clean, "default.png")
 
 def main():
     print("📥 Descargando es.m3u...")
@@ -90,18 +87,15 @@ def main():
     all_channels = parse_m3u(resp.text)
 
     output_lines = ['#EXTM3U url-tvg="https://www.tdtchannels.com/epg/TV.json"']
-    for name_clean, extinf, url in all_channels:
-        if name_clean in DESIRED_CHANNELS:
-            tvg_id = get_tvg_id(name_clean)
-            logo = get_logo(name_clean)
-            orig_name = extinf.split(',', 1)[1] if ',' in extinf else name_clean
-
-            if name_clean == "dmax":
-                url = DMAX_URL
-
-            new_extinf = f'#EXTINF:-1 tvg-id="{tvg_id}" tvg-name="{orig_name}" tvg-logo="{logo}" group-title="",{orig_name}'
+    for name, extinf, url in all_channels:
+        if name in IPTV_ORG_NAMES:
+            tvg_id = TVD_ID_MAP[name]
+            logo = get_logo(name)
+            # Usar nombre original para mostrar
+            new_extinf = f'#EXTINF:-1 tvg-id="{tvg_id}" tvg-name="{name}" tvg-logo="{logo}" group-title="",{name}'
+            final_url = DMAX_URL if name == "DMAX" else url
             output_lines.append(new_extinf)
-            output_lines.append(url)
+            output_lines.append(final_url)
 
     with open(OUTPUT_FILE, 'w', encoding='utf-8') as f:
         f.write("\n".join(output_lines) + "\n")

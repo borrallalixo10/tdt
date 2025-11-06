@@ -3,7 +3,6 @@ import re
 
 OUTPUT_FILE = "favoritos.m3u"
 TDT_URL = "https://www.tdtchannels.com/lists/tv.m3u"
-IPTV_URL = "https://iptv-org.github.io/iptv/countries/es.m3u"
 
 # URL fija para DMAX
 DMAX_FIXED_URL = "https://streaming.aurora.enhanced.live/eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpYXQiOjE3NjI0NTE1MzksIm5iZiI6MTc2MjQ1MTUzOSwiZXhwIjoxNzYyNDUxODk5LCJjb3VudHJ5Q29kZSI6ImVzIiwidWlwIjoiNzkuMTE2LjE4Mi4zMyJ9.bzxhLaIKA-3yHdC7ja06aWSYFWGZvJDnEwOrVENOjwU/live/es/b9243cdb24df40128098f3ea25fcf47d/index_3.m3u8"

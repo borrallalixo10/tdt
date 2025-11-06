@@ -4,49 +4,54 @@ import re
 OUTPUT_FILE = "favoritos.m3u"
 SOURCE_URL = "https://iptv-org.github.io/iptv/countries/es.m3u"
 
-# Lista de tvg-id que queremos (según tdtchannels + tus correcciones)
-DESIRED_TVG_IDS = {
-    "RTVE1.TV", "RTVE2.TV", "TVGAL.TV", "TVG2.TV", "ANTENA3.TV", "TELECINCO.TV",
-    "LASEXTA.TV", "CUATRO.TV", "24H.TV", "DMAX.TV", "FDF.TV", "PARAMOUNT.TV",
-    "TRECE.TV", "RMTV.TV", "CLAN.TV", "A3SERIES.TV", "MEGA.TV", "BEMAD.TV",
-    "NEOX.TV", "NOVA.TV", "DIVINITY.TV", "DKISS.TV", "Squirrel.es@SD",
-    "ENERGY.TV", "Teledeporte.es@SD", "TEN.TV", "BOING.TV"
+# Mapeo: nombre exacto en es.m3u → tvg-id de tdtchannels
+NAME_TO_TVGID = {
+    "La 1": "RTVE1.TV",
+    "La 2": "RTVE2.TV",
+    "TVG": "TVGAL.TV",
+    "TVG2": "TVG2.TV",
+    "Antena 3": "ANTENA3.TV",
+    "Telecinco": "TELECINCO.TV",
+    "La Sexta": "LASEXTA.TV",
+    "Cuatro": "CUATRO.TV",
+    "24h": "24H.TV",
+    "DMAX": "DMAX.TV",
+    "FDF": "FDF.TV",
+    "Paramount Network": "PARAMOUNT.TV",
+    "Trece": "TRECE.TV",
+    "Real Madrid TV": "RMTV.TV",
+    "Clan": "CLAN.TV",
+    "A3Series": "A3SERIES.TV",
+    "Mega": "MEGA.TV",
+    "BeMad": "BEMAD.TV",
+    "Neox": "NEOX.TV",
+    "Nova": "NOVA.TV",
+    "Divinity": "DIVINITY.TV",
+    "DKiss": "DKISS.TV",
+    "Squirrel": "Squirrel.es@SD",
+    "Energy": "ENERGY.TV",
+    "Teledeporte": "Teledeporte.es@SD",
+    "Ten": "TEN.TV",
+    "Boing": "BOING.TV"
 }
 
-# Mapeo inverso: tvg-id → nombre para mostrar y logo
-TV_INFO = {
-    "RTVE1.TV": ("La 1", "la1.png"),
-    "RTVE2.TV": ("La 2", "la2.png"),
-    "TVGAL.TV": ("TVG", "tvg.png"),
-    "TVG2.TV": ("TVG2", "tvg2.png"),
-    "ANTENA3.TV": ("Antena 3", "antena3.png"),
-    "TELECINCO.TV": ("Telecinco", "telecinco.png"),
-    "LASEXTA.TV": ("La Sexta", "lasexta.png"),
-    "CUATRO.TV": ("Cuatro", "cuatro.png"),
-    "24H.TV": ("24h", "24h.png"),
-    "DMAX.TV": ("DMAX", "dmax.png"),
-    "FDF.TV": ("FDF", "fdf.png"),
-    "PARAMOUNT.TV": ("Paramount Network", "paramount.png"),
-    "TRECE.TV": ("Trece", "trece.png"),
-    "RMTV.TV": ("Real Madrid TV", "realmadrid.png"),
-    "CLAN.TV": ("Clan", "clan.png"),
-    "A3SERIES.TV": ("A3Series", "a3series.png"),
-    "MEGA.TV": ("Mega", "mega.png"),
-    "BEMAD.TV": ("BeMad", "bemad.png"),
-    "NEOX.TV": ("Neox", "neox.png"),
-    "NOVA.TV": ("Nova", "nova.png"),
-    "DIVINITY.TV": ("Divinity", "divinity.png"),
-    "DKISS.TV": ("DKiss", "dkiss.png"),
-    "Squirrel.es@SD": ("Squirrel", "squirrel.png"),
-    "ENERGY.TV": ("Energy", "energy.png"),
-    "Teledeporte.es@SD": ("Teledeporte", "tdp.png"),
-    "TEN.TV": ("Ten", "ten.png"),
-    "BOING.TV": ("Boing", "boing.png"),
-}
+# Logos
+def get_logo(name):
+    slug_map = {
+        "La 1": "la1.png", "La 2": "la2.png", "TVG": "tvg.png", "TVG2": "tvg2.png",
+        "Antena 3": "antena3.png", "Telecinco": "telecinco.png", "La Sexta": "lasexta.png",
+        "Cuatro": "cuatro.png", "24h": "24h.png", "DMAX": "dmax.png", "FDF": "fdf.png",
+        "Paramount Network": "paramount.png", "Trece": "trece.png", "Real Madrid TV": "realmadrid.png",
+        "Clan": "clan.png", "A3Series": "a3series.png", "Mega": "mega.png", "BeMad": "bemad.png",
+        "Neox": "neox.png", "Nova": "nova.png", "Divinity": "divinity.png", "DKiss": "dkiss.png",
+        "Squirrel": "squirrel.png", "Energy": "energy.png", "Teledeporte": "tdp.png", "Ten": "ten.png",
+        "Boing": "boing.png"
+    }
+    return "https://www.tdtchannels.com/logos/" + slug_map.get(name, "default.png")
 
 DMAX_URL = "https://streaming.aurora.enhanced.live/eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpYXQiOjE3NjI0NTE1MzksIm5iZiI6MTc2MjQ1MTUzOSwiZXhwIjoxNzYyNDUxODk5LCJjb3VudHJ5Q29kZSI6ImVzIiwidWlwIjoiNzkuMTE2LjE4Mi4zMyJ9.bzxhLaIKA-3yHdC7ja06aWSYFWGZvJDnEwOrVENOjwU/live/es/b9243cdb24df40128098f3ea25fcf47d/index_3.m3u8"
 
-def parse_m3u_with_tvg(content):
+def parse_m3u(content):
     lines = content.strip().splitlines()
     channels = []
     i = 0
@@ -55,11 +60,8 @@ def parse_m3u_with_tvg(content):
             if i + 1 < len(lines):
                 extinf = lines[i]
                 url = lines[i + 1]
-                # Extraer tvg-id
-                tvg_id_match = re.search(r'tvg-id="([^"]*)"', extinf)
-                tvg_id = tvg_id_match.group(1) if tvg_id_match else ""
-                name = extinf.split(',', 1)[1] if ',' in extinf else tvg_id
-                channels.append((tvg_id, name, url))
+                name = extinf.split(',', 1)[1] if ',' in extinf else ''
+                channels.append((name, url))
                 i += 2
             else:
                 i += 1
@@ -71,15 +73,15 @@ def main():
     print("📥 Descargando es.m3u...")
     resp = requests.get(SOURCE_URL)
     resp.raise_for_status()
-    all_channels = parse_m3u_with_tvg(resp.text)
+    all_channels = parse_m3u(resp.text)
 
     output_lines = ['#EXTM3U url-tvg="https://www.tdtchannels.com/epg/TV.json"']
-    for tvg_id, original_name, url in all_channels:
-        if tvg_id in DESIRED_TVG_IDS:
-            display_name, logo_file = TV_INFO[tvg_id]
-            logo_url = f"https://www.tdtchannels.com/logos/{logo_file}"
-            final_url = DMAX_URL if tvg_id == "DMAX.TV" else url
-            output_lines.append(f'#EXTINF:-1 tvg-id="{tvg_id}" tvg-name="{display_name}" tvg-logo="{logo_url}" group-title="",{display_name}')
+    for name, url in all_channels:
+        if name in NAME_TO_TVGID:
+            tvg_id = NAME_TO_TVGID[name]
+            logo = get_logo(name)
+            final_url = DMAX_URL if name == "DMAX" else url
+            output_lines.append(f'#EXTINF:-1 tvg-id="{tvg_id}" tvg-name="{name}" tvg-logo="{logo}" group-title="",{name}')
             output_lines.append(final_url)
 
     with open(OUTPUT_FILE, 'w', encoding='utf-8') as f:

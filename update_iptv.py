@@ -4,50 +4,62 @@ import re
 OUTPUT_FILE = "favoritos.m3u"
 SOURCE_URL = "https://iptv-org.github.io/iptv/countries/es.m3u"
 
-# Mapeo: nombre exacto en es.m3u → tvg-id de tdtchannels
-NAME_TO_TVGID = {
-    "La 1": "RTVE1.TV",
-    "La 2": "RTVE2.TV",
-    "TVG": "TVGAL.TV",
-    "TVG2": "TVG2.TV",
-    "Antena 3": "ANTENA3.TV",
-    "Telecinco": "TELECINCO.TV",
-    "La Sexta": "LASEXTA.TV",
-    "Cuatro": "CUATRO.TV",
-    "24h": "24H.TV",
-    "DMAX": "DMAX.TV",
-    "FDF": "FDF.TV",
-    "Paramount Network": "PARAMOUNT.TV",
-    "Trece": "TRECE.TV",
-    "Real Madrid TV": "RMTV.TV",
-    "Clan": "CLAN.TV",
-    "A3Series": "A3SERIES.TV",
-    "Mega": "MEGA.TV",
-    "BeMad": "BEMAD.TV",
-    "Neox": "NEOX.TV",
-    "Nova": "NOVA.TV",
-    "Divinity": "DIVINITY.TV",
-    "DKiss": "DKISS.TV",
-    "Squirrel": "Squirrel.es@SD",
-    "Energy": "ENERGY.TV",
-    "Teledeporte": "Teledeporte.es@SD",
-    "Ten": "TEN.TV",
-    "Boing": "BOING.TV"
+# Nombres base que queremos (sin HD/SD)
+DESIRED_BASE_NAMES = {
+    "la 1", "la 2", "tvg", "tvg2", "antena 3", "telecinco", "la sexta", "cuatro",
+    "24h", "dmax", "fdf", "paramount network", "trece", "real madrid tv", "clan",
+    "a3series", "mega", "bemad", "neox", "nova", "divinity", "dkiss", "squirrel",
+    "energy", "teledeporte", "ten", "boing"
 }
 
-# Logos
-def get_logo(name):
-    slug_map = {
-        "La 1": "la1.png", "La 2": "la2.png", "TVG": "tvg.png", "TVG2": "tvg2.png",
-        "Antena 3": "antena3.png", "Telecinco": "telecinco.png", "La Sexta": "lasexta.png",
-        "Cuatro": "cuatro.png", "24h": "24h.png", "DMAX": "dmax.png", "FDF": "fdf.png",
-        "Paramount Network": "paramount.png", "Trece": "trece.png", "Real Madrid TV": "realmadrid.png",
-        "Clan": "clan.png", "A3Series": "a3series.png", "Mega": "mega.png", "BeMad": "bemad.png",
-        "Neox": "neox.png", "Nova": "nova.png", "Divinity": "divinity.png", "DKiss": "dkiss.png",
-        "Squirrel": "squirrel.png", "Energy": "energy.png", "Teledeporte": "tdp.png", "Ten": "ten.png",
-        "Boing": "boing.png"
+# Mapeo: nombre base → tvg-id de tdtchannels
+BASENAME_TO_TVGID = {
+    "la 1": "RTVE1.TV",
+    "la 2": "RTVE2.TV",
+    "tvg": "TVGAL.TV",
+    "tvg2": "TVG2.TV",
+    "antena 3": "ANTENA3.TV",
+    "telecinco": "TELECINCO.TV",
+    "la sexta": "LASEXTA.TV",
+    "cuatro": "CUATRO.TV",
+    "24h": "24H.TV",
+    "dmax": "DMAX.TV",
+    "fdf": "FDF.TV",
+    "paramount network": "PARAMOUNT.TV",
+    "trece": "TRECE.TV",
+    "real madrid tv": "RMTV.TV",
+    "clan": "CLAN.TV",
+    "a3series": "A3SERIES.TV",
+    "mega": "MEGA.TV",
+    "bemad": "BEMAD.TV",
+    "neox": "NEOX.TV",
+    "nova": "NOVA.TV",
+    "divinity": "DIVINITY.TV",
+    "dkiss": "DKISS.TV",
+    "squirrel": "Squirrel.es@SD",
+    "energy": "ENERGY.TV",
+    "teledeporte": "Teledeporte.es@SD",
+    "ten": "TEN.TV",
+    "boing": "BOING.TV"
+}
+
+def clean_basename(name):
+    # Eliminar sufijos como HD, SD, UHD, etc.
+    name = re.sub(r'\s*(HD|SD|UHD|FHD|4K|1080p|720p)\s*$', '', name, flags=re.IGNORECASE)
+    return re.sub(r'\s+', ' ', name.strip().lower())
+
+def get_logo(name_base):
+    logo_map = {
+        "la 1": "la1.png", "la 2": "la2.png", "tvg": "tvg.png", "tvg2": "tvg2.png",
+        "antena 3": "antena3.png", "telecinco": "telecinco.png", "la sexta": "lasexta.png",
+        "cuatro": "cuatro.png", "24h": "24h.png", "dmax": "dmax.png", "fdf": "fdf.png",
+        "paramount network": "paramount.png", "trece": "trece.png", "real madrid tv": "realmadrid.png",
+        "clan": "clan.png", "a3series": "a3series.png", "mega": "mega.png", "bemad": "bemad.png",
+        "neox": "neox.png", "nova": "nova.png", "divinity": "divinity.png", "dkiss": "dkiss.png",
+        "squirrel": "squirrel.png", "energy": "energy.png", "teledeporte": "tdp.png", "ten": "ten.png",
+        "boing": "boing.png"
     }
-    return "https://www.tdtchannels.com/logos/" + slug_map.get(name, "default.png")
+    return "https://www.tdtchannels.com/logos/" + logo_map.get(name_base, "default.png")
 
 DMAX_URL = "https://streaming.aurora.enhanced.live/eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpYXQiOjE3NjI0NTE1MzksIm5iZiI6MTc2MjQ1MTUzOSwiZXhwIjoxNzYyNDUxODk5LCJjb3VudHJ5Q29kZSI6ImVzIiwidWlwIjoiNzkuMTE2LjE4Mi4zMyJ9.bzxhLaIKA-3yHdC7ja06aWSYFWGZvJDnEwOrVENOjwU/live/es/b9243cdb24df40128098f3ea25fcf47d/index_3.m3u8"
 
@@ -76,12 +88,13 @@ def main():
     all_channels = parse_m3u(resp.text)
 
     output_lines = ['#EXTM3U url-tvg="https://www.tdtchannels.com/epg/TV.json"']
-    for name, url in all_channels:
-        if name in NAME_TO_TVGID:
-            tvg_id = NAME_TO_TVGID[name]
-            logo = get_logo(name)
-            final_url = DMAX_URL if name == "DMAX" else url
-            output_lines.append(f'#EXTINF:-1 tvg-id="{tvg_id}" tvg-name="{name}" tvg-logo="{logo}" group-title="",{name}')
+    for full_name, url in all_channels:
+        base_name = clean_basename(full_name)
+        if base_name in DESIRED_BASE_NAMES:
+            tvg_id = BASENAME_TO_TVGID[base_name]
+            logo = get_logo(base_name)
+            final_url = DMAX_URL if base_name == "dmax" else url
+            output_lines.append(f'#EXTINF:-1 tvg-id="{tvg_id}" tvg-name="{full_name}" tvg-logo="{logo}" group-title="",{full_name}')
             output_lines.append(final_url)
 
     with open(OUTPUT_FILE, 'w', encoding='utf-8') as f:

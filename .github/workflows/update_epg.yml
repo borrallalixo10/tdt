@@ -23,7 +23,7 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '20'
-          cache: 'npm'
+          # No usar cache aquí si no hay lockfile; removido para evitar errores cuando no existe package-lock.json
 
       - name: Ensure Python is available
         run: |
@@ -50,8 +50,12 @@ jobs:
       - name: Install epg dependencies
         working-directory: epg
         run: |
-          # Preferir npm ci si hay package-lock.json
-          if [ -f package-lock.json ]; then npm ci; else npm install; fi
+          # Preferir npm ci si hay package-lock.json, si no, usar npm install
+          if [ -f package-lock.json ]; then
+            npm ci
+          else
+            npm install
+          fi
 
       - name: Run Python script to generate playlist.m3u
         working-directory: epg
@@ -84,7 +88,6 @@ jobs:
             git add guide.xml || true
             if [ -n "$(git status --porcelain)" ]; then
               git commit -m "Actualizar guide.xml [Bot]" || echo "No hay cambios para commitear"
-              # Push a la rama actual desde la que se disparó el workflow
               git push origin HEAD:$BRANCH
             else
               echo "No changes to commit"

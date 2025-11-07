@@ -65,9 +65,9 @@ jobs:
           npm run grab -- --channels=./channels.xml --output=../guide.xml
 
       # Opcional: Borrar archivos temporales
-      - name: Cleanup temporary files
-        run: |
-          rm -f epg/channels.xml epg/generate_channels.py epg/epg_config.json
+      #- name: Cleanup temporary files
+      #  run: |
+      #    rm -f epg/channels.xml epg/generate_channels.py epg/epg_config.json
 
       # Paso 8: Subir el archivo generado
       - name: Commit and push guide.xml if changed

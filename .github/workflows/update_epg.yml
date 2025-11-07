@@ -13,74 +13,81 @@ jobs:
   update-epg:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
+      - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          persist-credentials: true
+          fetch-depth: 0
 
-      # Paso 1: Instalar Node.js y npm
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '20'
+          cache: 'npm'
 
-      # Paso 2: Clonar iptv-org/epg
+      - name: Ensure Python is available
+        run: |
+          python3 --version
+
       - name: Clone iptv-org/epg
         run: |
-          git clone --depth 1 -b master https://github.com/iptv-org/epg.git
-          cd epg
+          # Clonar la última versión del repositorio epg (usa la rama por defecto)
+          git clone --depth 1 https://github.com/iptv-org/epg.git
 
-      # Paso 3: Instalar dependencias de iptv-org/epg
-      - name: Install dependencies
+      - name: Copy playlist and script into epg
         run: |
-          cd epg
-          npm install
+          # Copiar archivos desde el repositorio a la carpeta epg
+          cp -v favoritos.m3u epg/ || true
+          cp -v generate_channels.py epg/ || true
 
-      # Paso 4: Copiar tu lista de favoritos y el script Python al directorio de epg
-      - name: Copy playlist and script
-        run: |
-          cp favoritos.m3u epg/
-          cp generate_channels.py epg/
-
-      # Paso 5: Verificar el contenido del archivo M3U copiado (opcional, para depuración)
       - name: Verify favoritos.m3u content (first 5 lines)
+        working-directory: epg
         run: |
-          cd epg
           echo "--- Contenido de favoritos.m3u (primeras 5 líneas) ---"
-          head -n 5 favoritos.m3u
+          if [ -f favoritos.m3u ]; then head -n 5 favoritos.m3u || true; else echo "favoritos.m3u no existe"; fi
           echo "--- Fin del contenido ---"
 
-      # Paso 6: Ejecutar el script Python dentro del directorio epg para generar playlist.m3u
+      - name: Install epg dependencies
+        working-directory: epg
+        run: |
+          # Preferir npm ci si hay package-lock.json
+          if [ -f package-lock.json ]; then npm ci; else npm install; fi
+
       - name: Run Python script to generate playlist.m3u
+        working-directory: epg
         run: |
-          cd epg
-          python3 generate_channels.py
+          # Ejecutar el script para generar playlist.m3u (usa python3)
+          if [ -f generate_channels.py ]; then python3 generate_channels.py; else echo "generate_channels.py faltante"; fi
 
-      # Paso 7: Ejecutar el script de descarga de EPG de iptv-org usando el playlist.m3u
-      # IMPORTANTE: No usar --site, solo --channels (que ahora es el playlist.m3u)
-      # y opcionalmente --output
       - name: Run EPG grabber
+        working-directory: epg
         run: |
-          cd epg
-          # El comando correcto es npm run grab -- --channels=playlist.m3u --output=../guide.xml
-          # Asegúrate de que el archivo se llame playlist.m3u y esté en el directorio correcto
-          npm run grab -- --channels=./playlist.m3u --output=../guide.xml
+          # Ejecutar el grabber usando la playlist generada; salida en ../guide.xml
+          if [ -f playlist.m3u ]; then
+            npm run grab -- --channels=./playlist.m3u --output=../guide.xml
+          else
+            echo "playlist.m3u no fue generado, saltando grab."
+          fi
 
-      # Opcional: Borrar archivos temporales
       - name: Cleanup temporary files
         run: |
-          rm -f epg/playlist.m3u epg/generate_channels.py epg/favoritos.m3u
+          rm -f epg/playlist.m3u epg/generate_channels.py epg/favoritos.m3u || true
 
-      # Paso 8: Subir el archivo generado *solo si existe*
       - name: Commit and push guide.xml if changed and exists
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          BRANCH: ${{ github.ref_name }}
         run: |
           if [ -f guide.xml ]; then
             git config --global user.name 'github-actions[bot]'
             git config --global user.email 'github-actions[bot]@users.noreply.github.com'
-            git add guide.xml
-            if ! git diff --quiet --cached; then
-              git commit -m "Actualizar guide.xml [Bot]"
-              git push
+            git add guide.xml || true
+            if [ -n "$(git status --porcelain)" ]; then
+              git commit -m "Actualizar guide.xml [Bot]" || echo "No hay cambios para commitear"
+              # Push a la rama actual desde la que se disparó el workflow
+              git push origin HEAD:$BRANCH
             else
-              echo "No changes to guide.xml"
+              echo "No changes to commit"
             fi
           else
             echo "guide.xml no fue generado. No se sube nada."

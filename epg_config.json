@@ -1,10 +1,10 @@
 {
   "sites": [
-    "eitb.eus",       // Ejemplo de sitio soportado (ETB)
-    "rtve.es",        // RTVE
-    "atresmedia.com", // Antena 3, La Sexta, etc.
-    "movistarplus.es", // Opcional, si cubre algunos
-    "tdtchannels.com" // Este es un buen candidato, aunque no esté en la lista oficial de iptv-org/epg
+    "eitb.eus",      
+    "rtve.es",       
+    "atresmedia.com", 
+    "movistarplus.es",
+    "tdtchannels.com" 
   ],
   "channels": [
     "La1.es@SD",

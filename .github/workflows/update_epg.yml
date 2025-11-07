@@ -1,6 +1,6 @@
 name: Actualizar EPG
 
-# Opcional: Ejecutarlo con el mismo cron que las listas, o en otro horario
+# Opcional: ejecutarlo con el mismo cron que las listas, o en otro horario
 on:
   schedule:
     # Corre cada 12 horas (a las 00:00 y 12:00 UTC)
@@ -44,16 +44,6 @@ jobs:
       - name: Run EPG grabber
         run: |
           cd epg
-          # Opción 1: Usar tu archivo de configuración personalizado
-          # Asegúrate de que el script soporte leer canales desde un archivo JSON o un argumento
-          # npm run grab -- --config=./epg_config.json
-          # Si no, puedes especificar los canales directamente o usar un playlist.m3u
-          # npm run grab -- --channels="La1.es@SD,La2.es@SD,..."
-
-          # Opción 2: Si `iptv-org/epg` no acepta un archivo de canales directamente,
-          # puedes generar un `playlist.m3u` temporal con solo los `tvg-id` que necesitas
-          # y pasarlo como argumento. Vamos con esta opción.
-
           # Extraer tvg-ids del archivo de configuración y crear un playlist temporal
           python3 -c "
 import json
@@ -63,7 +53,7 @@ tvg_ids = config.get('channels', [])
 with open('channels.m3u', 'w') as f:
     f.write('#EXTM3U\n')
     for tvg_id in tvg_ids:
-        f.write(f'#EXTINF:-1 tvg-id=\"{tvg_id}\"\n,placeholder\n')
+        f.write(f'#EXTINF:-1 tvg-id=\\\"{tvg_id}\\\"\n,placeholder\n')
 "
           # Ahora ejecuta grabber usando el playlist temporal
           npm run grab -- --channels=./channels.m3u --output=../guide.xml

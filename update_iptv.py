@@ -8,6 +8,9 @@ IPTV_ORG_ES_URL = "https://iptv-org.github.io/iptv/countries/es.m3u"
 # Archivo de equivalencias
 EQUIVALENCIAS_FILE = "equivalencias.json"
 
+# URL fija para DMAX
+DMAX_FIXED_URL = "https://streaming.aurora.enhanced.live/eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpYXQiOjE3NjI0NTE1MzksIm5iZiI6MTc2MjQ1MTUzOSwiZXhwIjoxNzYyNDUxODk5LCJjb3VudHJ5Q29kZSI6ImVzIiwidWlwIjoiNzkuMTE2LjE4Mi4zMyJ9.bzxhLaIKA-3yHdC7ja06aWSYFWGZvJDnEwOrVENOjwU/live/es/b9243cdb24df40128098f3ea25fcf47d/index_3.m3u8"
+
 def parse_m3u(content):
     """Parsea una lista M3U y devuelve una lista de (tvg_id, extinf, url)."""
     lines = content.strip().splitlines()
@@ -39,20 +42,32 @@ def main():
     with open(EQUIVALENCIAS_FILE, 'r', encoding='utf-8') as f:
         equivalencias = json.load(f)
 
-    # Crear un conjunto de tvg-ids deseados
-    tvg_ids_deseados = set(equivalencias.values())
+    # Crear un mapa de tvg-id -> (nombre_normalizado, orden)
+    tvg_id_to_info = {v["tvg_id"]: (k, v["orden"]) for k, v in equivalencias.items()}
 
     # --- Procesar favoritos y otros ---
-    favoritos_output = ['#EXTM3U'] # Sin url-tvg
+    favoritos_dict = {} # Usamos un dict para poder ordenar luego
     otros_output = ['#EXTM3U'] # Sin url-tvg
 
     for tvg_id, extinf, url in iptv_channels:
-        if tvg_id in tvg_ids_deseados:
-            favoritos_output.append(extinf)
-            favoritos_output.append(url)
+        info = tvg_id_to_info.get(tvg_id)
+        if info:
+            nombre_norm, orden = info
+            # Si es DMAX, usar la URL fija
+            if nombre_norm == "dmax" and DMAX_FIXED_URL:
+                 url = DMAX_FIXED_URL
+            favoritos_dict[orden] = (extinf, url)
         else:
             otros_output.append(extinf)
             otros_output.append(url)
+
+    # --- Generar favoritos.m3u con orden ---
+    favoritos_output = ['#EXTM3U'] # Sin url-tvg
+    # Ordenar por la clave (orden) y añadir al output
+    for orden in sorted(favoritos_dict.keys()):
+        extinf, url = favoritos_dict[orden]
+        favoritos_output.append(extinf)
+        favoritos_output.append(url)
 
     # --- Escribir archivos ---
     with open('favoritos.m3u', 'w', encoding='utf-8') as f:

@@ -1,6 +1,5 @@
 name: Actualizar EPG
 
-# Opcional: ejecutarlo con el mismo cron que las listas, o en otro horario
 on:
   schedule:
     # Corre cada 12 horas (a las 00:00 y 12:00 UTC)
@@ -21,48 +20,42 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20' # Usa una versión LTS reciente
+          node-version: '20'
 
-      # Paso 2: Copiar tu configuración y generar channels.m3u en el directorio raíz
-      - name: Generate channels.m3u
-        run: |
-          # Extraer tvg-ids del archivo de configuración y crear un playlist temporal en el directorio raíz
-          python3 -c "
-import json
-with open('epg_config.json', 'r') as f:
-    config = json.load(f)
-tvg_ids = config.get('channels', [])
-with open('channels.m3u', 'w') as f:
-    f.write('#EXTM3U\n')
-    for tvg_id in tvg_ids:
-        f.write(f'#EXTINF:-1 tvg-id=\\\"{tvg_id}\\\"\n,placeholder\n')
-"
-          echo "Archivo channels.m3u generado."
-
-      # Paso 3: Clonar iptv-org/epg
+      # Paso 2: Clonar iptv-org/epg
       - name: Clone iptv-org/epg
         run: |
           git clone --depth 1 -b master https://github.com/iptv-org/epg.git
           cd epg
 
-      # Paso 4: Instalar dependencias de iptv-org/epg
+      # Paso 3: Instalar dependencias de iptv-org/epg
       - name: Install dependencies
         run: |
           cd epg
           npm install
 
-      # Paso 5: Copiar tu configuración y el archivo channels.m3u al directorio de epg
-      - name: Copy config and channels.m3u
+      # Paso 4: Copiar tu configuración y el script Python al directorio de epg
+      - name: Copy config and script
         run: |
           cp epg_config.json epg/
-          cp channels.m3u epg/
+          cp generate_channels.py epg/
 
-      # Paso 6: Ejecutar el script de descarga de EPG
+      # Paso 5: Ejecutar el script Python dentro del directorio epg para generar channels.m3u
+      - name: Run Python script to generate channels.m3u
+        run: |
+          cd epg
+          python3 generate_channels.py epg_config.json
+
+      # Paso 6: Ejecutar el script de descarga de EPG de iptv-org
       - name: Run EPG grabber
         run: |
           cd epg
-          # Ahora ejecuta grabber usando el playlist temporal ya copiado
           npm run grab -- --channels=./channels.m3u --output=../guide.xml
+
+      # Opcional: Borrar archivos temporales
+      - name: Cleanup temporary files
+        run: |
+          rm -f epg/channels.m3u epg/generate_channels.py epg/epg_config.json
 
       # Paso 7: Subir el archivo generado
       - name: Commit and push guide.xml if changed

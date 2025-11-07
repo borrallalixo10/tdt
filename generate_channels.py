@@ -21,14 +21,18 @@ def main():
 
     tvg_ids = config.get('channels', [])
 
-    with open('channels.m3u', 'w', encoding='utf-8') as f:
-        f.write('#EXTM3U\n')
+    with open('channels.xml', 'w', encoding='utf-8') as f:
+        f.write('<?xml version="1.0" encoding="UTF-8"?>\n')
+        f.write('<channels>\n')
         for tvg_id in tvg_ids:
-            # Escribir la línea EXTINF con comillas escapadas para el archivo m3u
-            f.write(f'#EXTINF:-1 tvg-id="{tvg_id}"\n')
-            f.write(',placeholder\n') # URL temporal, no se usa realmente para el EPG
+            # Escribir cada canal como un elemento XML
+            # El formato es: <channel site="..." lang="..." xmltv_id="..." site_id="...">Nombre</channel>
+            # Como no tenemos site, lang, site_id específicos, los dejamos vacíos o genéricos.
+            # El xmltv_id será el tvg_id mismo.
+            f.write(f'  <channel xmltv_id="{tvg_id}"></channel>\n')
+        f.write('</channels>\n')
 
-    print(f"Archivo 'channels.m3u' generado con {len(tvg_ids)} canales.")
+    print(f"Archivo 'channels.xml' generado con {len(tvg_ids)} canales.")
 
 if __name__ == "__main__":
     main()

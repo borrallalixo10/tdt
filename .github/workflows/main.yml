@@ -33,9 +33,9 @@ jobs:
         run: |
           git config --global user.name 'github-actions[bot]'
           git config --global user.email 'github-actions[bot]@users.noreply.github.com'
-          git add favoritos.m3u otros.m3u
+          git add favoritos.m3u otros.m3u equivalencias.json
           if ! git diff --quiet --cached; then
-            git commit -m "Actualizar favoritos.m3u y otros.m3u [Bot]"
+            git commit -m "Actualizar favoritos.m3u, otros.m3u y equivalencias.json [Bot]"
             git push
           else
             echo "No changes to commit"

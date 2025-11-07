@@ -40,13 +40,24 @@ jobs:
           cp epg_config.json epg/
           cp generate_channels.py epg/
 
-      # Paso 5: Ejecutar el script Python dentro del directorio epg para generar channels.m3u
+      # Paso 5: Verificar el contenido del archivo JSON copiado (opcional, para depuración)
+      - name: Verify epg_config.json content
+        run: |
+          cd epg
+          echo "--- Contenido de epg_config.json ---"
+          cat epg_config.json
+          echo "--- Fin del contenido ---"
+          echo "Intentando validar JSON..."
+          python3 -c "import json; json.load(open('epg_config.json'))"
+          echo "JSON válido."
+
+      # Paso 6: Ejecutar el script Python dentro del directorio epg para generar channels.m3u
       - name: Run Python script to generate channels.m3u
         run: |
           cd epg
           python3 generate_channels.py epg_config.json
 
-      # Paso 6: Ejecutar el script de descarga de EPG de iptv-org
+      # Paso 7: Ejecutar el script de descarga de EPG de iptv-org
       - name: Run EPG grabber
         run: |
           cd epg
@@ -57,7 +68,7 @@ jobs:
         run: |
           rm -f epg/channels.m3u epg/generate_channels.py epg/epg_config.json
 
-      # Paso 7: Subir el archivo generado
+      # Paso 8: Subir el archivo generado
       - name: Commit and push guide.xml if changed
         run: |
           git config --global user.name 'github-actions[bot]'

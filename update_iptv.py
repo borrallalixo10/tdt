@@ -12,8 +12,8 @@ IPTV_ORG_ES_URL = "https://iptv-org.github.io/iptv/countries/es.m3u"
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 EQUIVALENCIAS_FILE = os.path.join(BASE_DIR, "equivalencias.json")
 
-# URL fija para DMAX (si aplicable). Rellenar si se dispone de la URL correcta.
-DMAX_FIXED_URL = ""  # Si no se quiere forzar, dejar vacía.
+# URL fija para DMAX
+DMAX_FIXED_URL = "https://streaming.aurora.enhanced.live/eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpYXQiOjE3NjI0NTE1MzksIm5iZiI6MTc2MjQ1MTUzOSwiZXhwIjoxNzYyNDUxODk5LCJjb3VudHJ5Q29kZSI6ImVzIiwidWlwIjoiNzkuMTE2LjE4Mi4zMyJ9.bzxhLaIKA-3yHdC7ja06aWSYFWGZvJDnEwOrVENOjwU/live/es/b9243cdb24df40128098f3ea25fcf47d/index_3.m3u8"
 
 def parse_m3u(content):
     """Parsea una lista M3U y devuelve una lista de (tvg_id, extinf, url)."""
@@ -80,6 +80,9 @@ def main():
     # Usamos una lista para permitir órdenes duplicados y conservar todos los canales
     favoritos_list = []  # elementos: (orden, extinf, url)
     otros_output = ['#EXTM3U']
+
+    # Agregar manualmente DMAX como canal 9, si no está presente
+    favoritos_list.append((9, '#EXTINF:-1 tvg-id="dmax" group-title="General",DMAX', DMAX_FIXED_URL))
 
     for tvg_id, extinf, url in iptv_channels:
         info = equivalencias_map.get(tvg_id)

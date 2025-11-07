@@ -1,6 +1,6 @@
 name: Actualizar EPG
 
-# Opcional: ejecutarlo con el mismo cron que las listas, o en otro horario
+# Opcional: Ejecutarlo con el mismo cron que las listas, o en otro horario
 on:
   schedule:
     # Corre cada 12 horas (a las 00:00 y 12:00 UTC)

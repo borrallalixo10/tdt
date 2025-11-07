@@ -1,11 +1,4 @@
 {
-  "sites": [
-    "eitb.eus",      
-    "rtve.es",       
-    "atresmedia.com", 
-    "movistarplus.es",
-    "tdtchannels.com" 
-  ],
   "channels": [
     "La1.es@SD",
     "La2.es@SD",

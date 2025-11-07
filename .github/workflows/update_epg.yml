@@ -53,7 +53,7 @@ tvg_ids = config.get('channels', [])
 with open('channels.m3u', 'w') as f:
     f.write('#EXTM3U\n')
     for tvg_id in tvg_ids:
-        f.write(f'#EXTINF:-1 tvg-id=\\\"{tvg_id}\\\"\n,placeholder\n')
+        f.write(f'#EXTINF:-1 tvg-id=\"{tvg_id}\"\n,placeholder\n')
 "
           # Ahora ejecuta grabber usando el playlist temporal
           npm run grab -- --channels=./channels.m3u --output=../guide.xml

@@ -2,12 +2,8 @@ import requests
 import json
 import re
 
-# URLs de las fuentes
-TDT_CHANNELS_URL = "https://www.tdtchannels.com/lists/tv.m3u"
+# URL de la lista de iptv-org para España
 IPTV_ORG_ES_URL = "https://iptv-org.github.io/iptv/countries/es.m3u"
-
-# URL fija para DMAX
-DMAX_FIXED_URL = "https://streaming.aurora.enhanced.live/eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpYXQiOjE3NjI0NTE1MzksIm5iZiI6MTc2MjQ1MTUzOSwiZXhwIjoxNzYyNDUxODk5LCJjb3VudHJ5Q29kZSI6ImVzIiwidWlwIjoiNzkuMTE2LjE4Mi4zMyJ9.bzxhLaIKA-3yHdC7ja06aWSYFWGZvJDnEwOrVENOjwU/live/es/b9243cdb24df40128098f3ea25fcf47d/index_3.m3u8"
 
 # Archivo de equivalencias
 EQUIVALENCIAS_FILE = "equivalencias.json"
@@ -34,11 +30,7 @@ def parse_m3u(content):
     return channels
 
 def main():
-    print("📥 Descargando listas...")
-    tdt_resp = requests.get(TDT_CHANNELS_URL)
-    tdt_resp.raise_for_status()
-    tdt_channels = parse_m3u(tdt_resp.text)
-
+    print("📥 Descargando lista de iptv-org...")
     iptv_resp = requests.get(IPTV_ORG_ES_URL)
     iptv_resp.raise_for_status()
     iptv_channels = parse_m3u(iptv_resp.text)
@@ -47,35 +39,20 @@ def main():
     with open(EQUIVALENCIAS_FILE, 'r', encoding='utf-8') as f:
         equivalencias = json.load(f)
 
-    # Crear mapa de tvg-id -> (extinf, url) para iptv-org
-    iptv_map = {tvg_id: (extinf, url) for tvg_id, extinf, url in iptv_channels if tvg_id}
+    # Crear un conjunto de tvg-ids deseados
+    tvg_ids_deseados = set(equivalencias.values())
 
-    # --- Procesar favoritos ---
-    favoritos_output = ['#EXTM3U url-tvg="https://www.tdtchannels.com/epg/TV.json"']
-    otros_output = ['#EXTM3U']
+    # --- Procesar favoritos y otros ---
+    favoritos_output = ['#EXTM3U'] # Sin url-tvg
+    otros_output = ['#EXTM3U'] # Sin url-tvg
 
-    for tdt_tvg_id, tdt_extinf, tdt_url in tdt_channels:
-        iptv_tvg_id = equivalencias.get(tdt_tvg_id)
-        stream_url = None
-        if tdt_tvg_id == "DMAX.TV" and DMAX_FIXED_URL:
-             stream_url = DMAX_FIXED_URL
-        elif iptv_tvg_id and iptv_tvg_id in iptv_map:
-            _, stream_url = iptv_map[iptv_tvg_id]
-
-        if stream_url:
-            # Modificar el EXTINF de tdtchannels para usar group-title="tdt"
-            # Buscar y reemplazar group-title
-            updated_extinf = re.sub(r'group-title="[^"]*"', 'group-title="tdt"', tdt_extinf)
-            # Si no existe group-title, añadirlo
-            if 'group-title=' not in updated_extinf:
-                updated_extinf = updated_extinf.replace(',', ' group-title="tdt",')
-
-            favoritos_output.append(updated_extinf)
-            favoritos_output.append(stream_url)
+    for tvg_id, extinf, url in iptv_channels:
+        if tvg_id in tvg_ids_deseados:
+            favoritos_output.append(extinf)
+            favoritos_output.append(url)
         else:
-            # Canal no encontrado en equivalencias o sin stream, va a otros.m3u
-            otros_output.append(tdt_extinf)
-            otros_output.append(tdt_url)
+            otros_output.append(extinf)
+            otros_output.append(url)
 
     # --- Escribir archivos ---
     with open('favoritos.m3u', 'w', encoding='utf-8') as f:

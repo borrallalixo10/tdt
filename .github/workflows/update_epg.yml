@@ -1,42 +1,82 @@
-name: Actualizar Listas IPTV
+name: Actualizar EPG
 
+# Opcional: ejecutarlo con el mismo cron que las listas, o en otro horario
 on:
   schedule:
-    # Corre cada 6 horas (a las 00:00, 06:00, 12:00, 18:00 UTC)
-    - cron: '0 0,6,12,18 * * *'
+    # Corre cada 12 horas (a las 00:00 y 12:00 UTC)
+    - cron: '0 0,12 * * *'
   workflow_dispatch: # Permitir ejecución manual
 
 permissions:
   contents: write
 
 jobs:
-  update:
+  update-epg:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Set up Python
-        uses: actions/setup-python@v5
+      # Paso 1: Instalar Node.js y npm
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
         with:
-          python-version: '3.10'
+          node-version: '20' # Usa una versión LTS reciente
 
+      # Paso 2: Clonar iptv-org/epg
+      - name: Clone iptv-org/epg
+        run: |
+          git clone --depth 1 -b master https://github.com/iptv-org/epg.git
+          cd epg
+
+      # Paso 3: Instalar dependencias de iptv-org/epg
       - name: Install dependencies
         run: |
-          python -m pip install --upgrade pip
-          pip install requests
+          cd epg
+          npm install
 
-      - name: Run update script
-        run: python update_iptv.py
+      # Paso 4: Copiar tu configuración al directorio de epg
+      - name: Copy config
+        run: |
+          cp epg_config.json epg/
 
-      - name: Commit and push if changed
+      # Paso 5: Ejecutar el script de descarga de EPG
+      - name: Run EPG grabber
+        run: |
+          cd epg
+          # Opción 1: Usar tu archivo de configuración personalizado
+          # Asegúrate de que el script soporte leer canales desde un archivo JSON o un argumento
+          # npm run grab -- --config=./epg_config.json
+          # Si no, puedes especificar los canales directamente o usar un playlist.m3u
+          # npm run grab -- --channels="La1.es@SD,La2.es@SD,..."
+
+          # Opción 2: Si `iptv-org/epg` no acepta un archivo de canales directamente,
+          # puedes generar un `playlist.m3u` temporal con solo los `tvg-id` que necesitas
+          # y pasarlo como argumento. Vamos con esta opción.
+
+          # Extraer tvg-ids del archivo de configuración y crear un playlist temporal
+          python3 -c "
+import json
+with open('epg_config.json', 'r') as f:
+    config = json.load(f)
+tvg_ids = config.get('channels', [])
+with open('channels.m3u', 'w') as f:
+    f.write('#EXTM3U\n')
+    for tvg_id in tvg_ids:
+        f.write(f'#EXTINF:-1 tvg-id=\"{tvg_id}\"\n,placeholder\n')
+"
+          # Ahora ejecuta grabber usando el playlist temporal
+          npm run grab -- --channels=./channels.m3u --output=../guide.xml
+
+      # Paso 6: Subir el archivo generado
+      - name: Commit and push guide.xml if changed
         run: |
           git config --global user.name 'github-actions[bot]'
           git config --global user.email 'github-actions[bot]@users.noreply.github.com'
-          git add favoritos.m3u otros.m3u equivalencias.json
+          git add guide.xml
           if ! git diff --quiet --cached; then
-            git commit -m "Actualizar favoritos.m3u, otros.m3u y equivalencias.json [Bot]"
+            git commit -m "Actualizar guide.xml [Bot]"
             git push
           else
-            echo "No changes to commit"
+            echo "No changes to guide.xml"
           fi

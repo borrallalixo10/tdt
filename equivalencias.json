@@ -1,7 +1,7 @@
 {
   "la1": {"tvg_id": "La1.es@SD", "orden": 1},
   "la2": {"tvg_id": "La2.es@SD", "orden": 2},
-  "tvg": {"tvg_id": "TVG.es@SD", "orden": 3},
+  "tvg": {"tvg_id": "GaliciaTVEuropa.es@SD", "orden": 3},
   "antena3": {"tvg_id": "Antena3.es@National", "orden": 4},
   "telecinco": {"tvg_id": "Telecinco.es@SD", "orden": 5},
   "lasexta": {"tvg_id": "LaSexta.es@SD", "orden": 6},

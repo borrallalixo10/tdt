@@ -1,0 +1,36 @@
+{
+  "sites": [
+    "eitb.eus",       // Ejemplo de sitio soportado (ETB)
+    "rtve.es",        // RTVE
+    "atresmedia.com", // Antena 3, La Sexta, etc.
+    "movistarplus.es", // Opcional, si cubre algunos
+    "tdtchannels.com" // Este es un buen candidato, aunque no esté en la lista oficial de iptv-org/epg
+  ],
+  "channels": [
+    "La1.es@SD",
+    "La2.es@SD",
+    "TVG.es@SD",
+    "Antena3.es@National",
+    "Telecinco.es@SD",
+    "LaSexta.es@SD",
+    "Cuatro.es@SD",
+    "24Horas.es@SD",
+    "DMAX.es@SD",
+    "FactoriadeFiccion.es@SD",
+    "ParamountNetwork.es@SD",
+    "Trece.es@SD",
+    "RealMadridTV.es@SD",
+    "Clan.es@SD",
+    "Atreseries.es@SD",
+    "Mega.es@SD",
+    "BeMad.es@SD",
+    "Neox.es@SD",
+    "Nova.es@SD",
+    "Divinity.es@SD",
+    "Squirrel.es@SD",
+    "Energy.es@SD",
+    "Teledeporte.es@SD",
+    "TEN.es@SD",
+    "TVG2.es@SD"
+  ]
+}

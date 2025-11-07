@@ -23,11 +23,9 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '20'
-          # No usar cache aquí si no hay lockfile; removido para evitar errores cuando no existe package-lock.json
 
       - name: Ensure Python is available
-        run: |
-          python3 --version
+        run: python3 --version
 
       - name: Clone iptv-org/epg
         run: |
@@ -36,7 +34,7 @@ jobs:
 
       - name: Copy playlist and script into epg
         run: |
-          # Copiar archivos desde el repositorio a la carpeta epg
+          # Copiar archivos desde el repositorio a la carpeta epg (no fallar si no existen)
           cp -v favoritos.m3u epg/ || true
           cp -v generate_channels.py epg/ || true
 
@@ -57,18 +55,75 @@ jobs:
             npm install
           fi
 
+      - name: Validate XML files in epg (detect malformed XML early)
+        working-directory: epg
+        run: |
+          # Este script valida todos los .xml del repo epg usando xml-js (misma librería que usa el grabber).
+          # Si hay un XML mal formado el paso fallará y mostrará la ruta del archivo y la excepción.
+          node -e "
+          const fs = require('fs');
+          const path = require('path');
+          const xmljs = require('xml-js');
+          function walk(dir) {
+            const files = fs.readdirSync(dir);
+            for (const f of files) {
+              const p = path.join(dir, f);
+              const stat = fs.statSync(p);
+              if (stat.isDirectory()) {
+                walk(p);
+              } else if (p.toLowerCase().endsWith('.xml')) {
+                try {
+                  xmljs.xml2js(fs.readFileSync(p,'utf8'));
+                } catch (e) {
+                  console.error('--- ERROR PARSING XML ---');
+                  console.error('File:', p);
+                  console.error(e && e.message ? e.message : e);
+                  // Print a little context to help debugging
+                  const content = fs.readFileSync(p,'utf8').split('\\n').slice(0,80).join('\\n');
+                  console.error('--- File head (first 80 lines) ---\\n' + content);
+                  process.exit(2);
+                }
+              }
+            }
+          }
+          walk(process.cwd());
+          console.log('All XML in epg/ appear valid.');
+          "
+
       - name: Run Python script to generate playlist.m3u
         working-directory: epg
         run: |
           # Ejecutar el script para generar playlist.m3u (usa python3)
           if [ -f generate_channels.py ]; then python3 generate_channels.py; else echo "generate_channels.py faltante"; fi
+          echo "playlist.m3u present:"
+          ls -l playlist.m3u || true
+          echo "--- head of playlist.m3u ---"
+          head -n 40 playlist.m3u || true
+          echo "---------------------------"
 
       - name: Run EPG grabber
         working-directory: epg
+        env:
+          NODE_OPTIONS: '--max-old-space-size=4096'
         run: |
           # Ejecutar el grabber usando la playlist generada; salida en ../guide.xml
           if [ -f playlist.m3u ]; then
-            npm run grab -- --channels=./playlist.m3u --output=../guide.xml
+            set -o pipefail
+            npm run grab -- --channels=./playlist.m3u --output=../guide.xml 2>&1 | tee grab.log
+            rc=${PIPESTATUS[0]}
+            if [ $rc -ne 0 ]; then
+              echo "npm run grab falló con código $rc. Mostrando log y ejecutando diagnóstico adicional..."
+              tail -n +1 grab.log | sed -n '1,200p'
+              echo "Intentando identificar XML malformado dentro de epg/ con la misma librería xml-js..."
+              node -e "
+              const fs = require('fs'), path=require('path'), xmljs=require('xml-js');
+              function walk(dir){for(const f of fs.readdirSync(dir)){const p=path.join(dir,f); const s=fs.statSync(p); if(s.isDirectory()) walk(p); else if(p.toLowerCase().endsWith('.xml')){ try{ xmljs.xml2js(fs.readFileSync(p,'utf8')); } catch(e){ console.error('FAILED TO PARSE:',p); console.error(e.message); console.error('--- file head ---\\n'+fs.readFileSync(p,'utf8').split('\\n').slice(0,80).join('\\n')); process.exit(3); }}}}
+              try{ walk(process.cwd()); console.log('No malformed XML detected by diagnostic.'); }catch(e){ process.exit(4); }
+              "
+              exit $rc
+            else
+              echo "Grab completed successfully."
+            fi
           else
             echo "playlist.m3u no fue generado, saltando grab."
           fi
@@ -76,6 +131,7 @@ jobs:
       - name: Cleanup temporary files
         run: |
           rm -f epg/playlist.m3u epg/generate_channels.py epg/favoritos.m3u || true
+          rm -f epg/grab.log || true
 
       - name: Commit and push guide.xml if changed and exists
         env:

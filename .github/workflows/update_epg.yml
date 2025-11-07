@@ -34,50 +34,54 @@ jobs:
           cd epg
           npm install
 
-      # Paso 4: Copiar tu configuración y el script Python al directorio de epg
-      - name: Copy config and script
+      # Paso 4: Copiar tu lista de favoritos y el script Python al directorio de epg
+      - name: Copy playlist and script
         run: |
-          cp epg_config.json epg/
+          cp favoritos.m3u epg/
           cp generate_channels.py epg/
 
-      # Paso 5: Verificar el contenido del archivo JSON copiado (opcional, para depuración)
-      - name: Verify epg_config.json content
+      # Paso 5: Verificar el contenido del archivo M3U copiado (opcional, para depuración)
+      - name: Verify favoritos.m3u content (first 5 lines)
         run: |
           cd epg
-          echo "--- Contenido de epg_config.json ---"
-          cat epg_config.json
+          echo "--- Contenido de favoritos.m3u (primeras 5 líneas) ---"
+          head -n 5 favoritos.m3u
           echo "--- Fin del contenido ---"
-          echo "Intentando validar JSON..."
-          python3 -c "import json; json.load(open('epg_config.json'))"
-          echo "JSON válido."
 
-      # Paso 6: Ejecutar el script Python dentro del directorio epg para generar channels.xml
-      - name: Run Python script to generate channels.xml
+      # Paso 6: Ejecutar el script Python dentro del directorio epg para generar playlist.m3u
+      - name: Run Python script to generate playlist.m3u
         run: |
           cd epg
-          python3 generate_channels.py epg_config.json
+          python3 generate_channels.py
 
-      # Paso 7: Ejecutar el script de descarga de EPG de iptv-org
-      # IMPORTANTE: Cambia --channels=./channels.m3u por --channels=./channels.xml
+      # Paso 7: Ejecutar el script de descarga de EPG de iptv-org usando el playlist.m3u
+      # IMPORTANTE: No usar --site, solo --channels (que ahora es el playlist.m3u)
+      # y opcionalmente --output
       - name: Run EPG grabber
         run: |
           cd epg
-          npm run grab -- --channels=./channels.xml --output=../guide.xml
+          # El comando correcto es npm run grab -- --channels=playlist.m3u --output=../guide.xml
+          # Asegúrate de que el archivo se llame playlist.m3u y esté en el directorio correcto
+          npm run grab -- --channels=./playlist.m3u --output=../guide.xml
 
       # Opcional: Borrar archivos temporales
-      #- name: Cleanup temporary files
-      #  run: |
-      #    rm -f epg/channels.xml epg/generate_channels.py epg/epg_config.json
-
-      # Paso 8: Subir el archivo generado
-      - name: Commit and push guide.xml if changed
+      - name: Cleanup temporary files
         run: |
-          git config --global user.name 'github-actions[bot]'
-          git config --global user.email 'github-actions[bot]@users.noreply.github.com'
-          git add guide.xml
-          if ! git diff --quiet --cached; then
-            git commit -m "Actualizar guide.xml [Bot]"
-            git push
+          rm -f epg/playlist.m3u epg/generate_channels.py epg/favoritos.m3u
+
+      # Paso 8: Subir el archivo generado *solo si existe*
+      - name: Commit and push guide.xml if changed and exists
+        run: |
+          if [ -f guide.xml ]; then
+            git config --global user.name 'github-actions[bot]'
+            git config --global user.email 'github-actions[bot]@users.noreply.github.com'
+            git add guide.xml
+            if ! git diff --quiet --cached; then
+              git commit -m "Actualizar guide.xml [Bot]"
+              git push
+            else
+              echo "No changes to guide.xml"
+            fi
           else
-            echo "No changes to guide.xml"
+            echo "guide.xml no fue generado. No se sube nada."
           fi

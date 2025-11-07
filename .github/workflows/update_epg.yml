@@ -23,28 +23,10 @@ jobs:
         with:
           node-version: '20' # Usa una versión LTS reciente
 
-      # Paso 2: Clonar iptv-org/epg
-      - name: Clone iptv-org/epg
+      # Paso 2: Copiar tu configuración y generar channels.m3u en el directorio raíz
+      - name: Generate channels.m3u
         run: |
-          git clone --depth 1 -b master https://github.com/iptv-org/epg.git
-          cd epg
-
-      # Paso 3: Instalar dependencias de iptv-org/epg
-      - name: Install dependencies
-        run: |
-          cd epg
-          npm install
-
-      # Paso 4: Copiar tu configuración al directorio de epg
-      - name: Copy config
-        run: |
-          cp epg_config.json epg/
-
-      # Paso 5: Ejecutar el script de descarga de EPG
-      - name: Run EPG grabber
-        run: |
-          cd epg
-          # Extraer tvg-ids del archivo de configuración y crear un playlist temporal
+          # Extraer tvg-ids del archivo de configuración y crear un playlist temporal en el directorio raíz
           python3 -c "
 import json
 with open('epg_config.json', 'r') as f:
@@ -55,10 +37,34 @@ with open('channels.m3u', 'w') as f:
     for tvg_id in tvg_ids:
         f.write(f'#EXTINF:-1 tvg-id=\\\"{tvg_id}\\\"\n,placeholder\n')
 "
-          # Ahora ejecuta grabber usando el playlist temporal
+          echo "Archivo channels.m3u generado."
+
+      # Paso 3: Clonar iptv-org/epg
+      - name: Clone iptv-org/epg
+        run: |
+          git clone --depth 1 -b master https://github.com/iptv-org/epg.git
+          cd epg
+
+      # Paso 4: Instalar dependencias de iptv-org/epg
+      - name: Install dependencies
+        run: |
+          cd epg
+          npm install
+
+      # Paso 5: Copiar tu configuración y el archivo channels.m3u al directorio de epg
+      - name: Copy config and channels.m3u
+        run: |
+          cp epg_config.json epg/
+          cp channels.m3u epg/
+
+      # Paso 6: Ejecutar el script de descarga de EPG
+      - name: Run EPG grabber
+        run: |
+          cd epg
+          # Ahora ejecuta grabber usando el playlist temporal ya copiado
           npm run grab -- --channels=./channels.m3u --output=../guide.xml
 
-      # Paso 6: Subir el archivo generado
+      # Paso 7: Subir el archivo generado
       - name: Commit and push guide.xml if changed
         run: |
           git config --global user.name 'github-actions[bot]'

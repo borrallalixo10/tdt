@@ -15,7 +15,7 @@ EPG_CHANNEL_MAPPING = {
     "RealMadridTV.es@SD": "Real Madrid TV.es",
     "Teledeporte.es@SD": "Teledeporte.es",
     "Divinity.es@SD": "Divinity.es",
-    "DMAX": "DMAX.es",
+    "dmax": "DMAX.es",
     "FactoriadeFiccion.es@SD": "Factoría de Ficción.es",
     "Atreseries.es@SD": "Atreseries.es",
     "Mega.es@SD": "Mega.es",

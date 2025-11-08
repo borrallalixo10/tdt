@@ -5,13 +5,14 @@ from pathlib import Path
 EPG_CHANNEL_MAPPING = {
     "La1.es@SD": "La 1.es",
     "La2.es@SD": "La 2.es",
+    "GaliciaTVEuropa.es@SD": "TVG.es",
     "Antena3.es@National": "Antena 3.es",
     "Telecinco.es@SD": "Telecinco.es",
     "Cuatro.es@SD": "Cuatro.es",
-    "24Horas.es@SD": "24 Horas.es",
+    "24Horas.es@SD": "Canal 24 horas.es",
     "Clan.es@SD": "Clan.es",
     "ParamountNetwork.es@SD": "Paramount Network.es",
-    "Trece.es@SD": "Trece.es",
+    "Trece.es@SD": "TRECE.es",
     "RealMadridTV.es@SD": "Real Madrid TV.es",
     "Teledeporte.es@SD": "Teledeporte.es",
     "Divinity.es@SD": "Divinity.es",
@@ -25,7 +26,7 @@ EPG_CHANNEL_MAPPING = {
     "Squirrel.es@SD": "Squirrel.es",
     "Energy.es@SD": "Energy.es",
     "TEN.es@SD": "TEN.es",
-    "TVG2.es@SD": "TVG2.es",
+    "TVG2.es@SD": "TVG 2.es",
 }
 
 def normalize_channel_name(name):

@@ -38,6 +38,9 @@ jobs:
       - name: Run update script
         run: python update_iptv.py
 
+      - name: Run EPG compatibility fix script
+        run: python fix_epg_compatibility.py  
+
       - name: Commit and push if changed
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

@@ -23,5 +23,10 @@
   "energy": {"tvg_id": "Energy.es@SD", "orden": 22},
   "teledeporte": {"tvg_id": "Teledeporte.es@SD", "orden": 23},
   "ten": {"tvg_id": "TEN.es@SD", "orden": 24},
-  "tvg2": {"tvg_id": "TVG2.es@SD", "orden": 25}
+  "tvg2": {"tvg_id": "TVG2.es@SD", "orden": 25},
+  "RakutenTVActionMovies.es@Spain": {"tvg_id": "RakutenTVActionMovies.es@Spain", "orden": 26},
+  "RakutenTVComedyMovies.es@Spain": {"tvg_id": "RakutenTVComedyMovies.es@Spain", "orden": 27},
+  "RakutenTVDramaMovies.es@Spain": {"tvg_id": "RakutenTVDramaMovies.es@Spain", "orden": 28},
+  "RakutenTVFamilyMovies.es@Spain": {"tvg_id": "RakutenTVFamilyMovies.es@Spain", "orden": 29},
+  "RakutenTVTopMovies.es@Spain": {"tvg_id": "RakutenTVTopMovies.es@Spain", "orden": 30},
 }

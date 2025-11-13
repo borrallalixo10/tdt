@@ -1,5 +1,5 @@
 {
-  "La 1": {"tvg_id": "La1.es@HEVC", "orden": 1},
+  "la1": {"tvg_id": "La1.es@HEVC", "orden": 1},
   "la2": {"tvg_id": "La2.es@SD", "orden": 2},
   "tvg": {"tvg_id": "GaliciaTVEuropa.es@SD", "orden": 3},
   "antena3": {"tvg_id": "Antena3.es@National", "orden": 4},

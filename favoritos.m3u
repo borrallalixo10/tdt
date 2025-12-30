@@ -19,8 +19,6 @@ https://d32rw80ytx9uxs.cloudfront.net/v1/master/3722c60a815c199d9c0ef36c5b73da68
 https://streaming.aurora.enhanced.live/eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpYXQiOjE3NjI0NTE1MzksIm5iZiI6MTc2MjQ1MTUzOSwiZXhwIjoxNzYyNDUxODk5LCJjb3VudHJ5Q29kZSI6ImVzIiwidWlwIjoiNzkuMTE2LjE4Mi4zMyJ9.bzxhLaIKA-3yHdC7ja06aWSYFWGZvJDnEwOrVENOjwU/live/es/b9243cdb24df40128098f3ea25fcf47d/index_3.m3u8
 #EXTINF:-1 tvg-id="Factoría de Ficción.es" tvg-logo="https://upload.wikimedia.org/wikipedia/commons/thumb/7/75/FDF_2012.png/500px-FDF_2012.png" group-title="Entertainment",FDF (1080p)
 http://176.65.146.237:8401/play/a09p/index.m3u8
-#EXTINF:-1 tvg-id="Paramount Network.es" tvg-logo="https://upload.wikimedia.org/wikipedia/commons/thumb/9/9f/Paramount_Network.svg/512px-Paramount_Network.svg.png" group-title="Movies;Series",Paramount Network Spain (1080p)
-http://176.65.146.237:8401/play/a09i/index.m3u8
 #EXTINF:-1 tvg-id="TRECE.es" tvg-logo="https://upload.wikimedia.org/wikipedia/commons/thumb/c/c4/Trece.svg/512px-Trece.svg.png" group-title="Religious",Trece (1080p)
 http://176.65.146.237:8401/play/a0a9/index.m3u8
 #EXTINF:-1 tvg-id="Real Madrid TV.es" tvg-logo="https://i.postimg.cc/2yp7nzVN/realmadridtv.png" group-title="Sports",Real Madrid TV (1080p)

@@ -299,14 +299,14 @@ https://streaming004.gestec-video.com/hls/MIJAS.m3u8
 https://bit.controlstreams.com:5443/LiveApp/streams/mirametv.m3u8
 #EXTINF:-1 tvg-id="MolahitsTV.es@SD" tvg-logo="https://i.imgur.com/FYcLtqT.png" group-title="Music",Molahits TV (720p)
 http://ventdelnord.tv:8080/mola/directe.m3u8
+#EXTINF:-1 tvg-id="MusicTVGranada.es" tvg-logo="https://i.ibb.co/Swd9NP7n/music-tv-granada.png" group-title="Music",Music TV Granada (1080p) [Not 24/7]
+https://cloudvideo.servers10.com:8081/8032/index.m3u8
 #EXTINF:-1 tvg-id="MyTimeMovieNetwork.es@SD" tvg-logo="https://i.imgur.com/pw4NZK1.png" group-title="Movies",MyTime movie network Spain (1080p)
 https://appletree-mytimespain-rakuten.amagi.tv/playlist.m3u8
 #EXTINF:-1 tvg-id="NatureTime.es@SD" tvg-logo="https://i.imgur.com/72JmyjM.png" group-title="Documentary",NatureTime (1080p)
 https://amg00090-blueantllc-lovenature-au-samsungau-wggcn.amagi.tv/playlist/amg00090-blueantllc-lovenature-au-samsungau/playlist.m3u8
 #EXTINF:-1 tvg-id="NegociosTV.es@SD" tvg-logo="https://m.media-amazon.com/images/I/21HEgSJn2gL.png" group-title="Business",Negocios TV (1080p)
 https://streaming013.gestec-video.com/hls/negociostv.m3u8
-#EXTINF:-1 tvg-id="NoroesteTV.es@SD" tvg-logo="https://i.imgur.com/s6V8rQd.png" group-title="General",Noroeste TV (1080p) [Not 24/7]
-https://cloudvideo.servers10.com:8081/8032/index.m3u8
 #EXTINF:-1 tvg-id="Nortevision.es@SD" tvg-logo="https://i.imgur.com/C5SYw7B.png" group-title="Undefined",NORTEvisión (1080p)
 http://amaru.dyndns.org:8870/0.m3u8
 #EXTINF:-1 tvg-id="OlotTV.es@SD" tvg-logo="https://i.imgur.com/u8wO4Lf.png" http-user-agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/83.0.4103.97 Safari/537.36 CrKey/1.44.191160" group-title="General",Olot TV (1080p)
@@ -469,8 +469,8 @@ https://cloud.streamingconnect.tv/hls/telearanda/telearanda.m3u8
 https://cdn318.fractalmedia.es/318/live/hls/tvc/master.m3u8
 #EXTINF:-1 tvg-id="ThePetCollective.us@Spain" tvg-logo="https://i.imgur.com/yH7n2dF.png" group-title="Family",The Pet Collective
 https://the-pet-collective-international-es.samsung.wurl.tv/playlist.m3u8
-#EXTINF:-1 tvg-id="TuyaLaJandaTelevision.es@SD" tvg-logo="https://i.imgur.com/KjWuini.png" group-title="Undefined",Tuya La Janda Televisión (1080p)
-http://185.210.20.13:8080/0.m3u8
+#EXTINF:-1 tvg-id="TuyaLaJandaTelevision.es@SD" tvg-logo="https://i.imgur.com/KjWuini.png" group-title="Undefined",Tuya La Janda Television (720p)
+https://play.agenciastreaming.com:8081/tuyaespana/tracks-v1a1/mono.m3u8
 #EXTINF:-1 tvg-id="TV3.es@SD" tvg-logo="https://upload.wikimedia.org/wikipedia/commons/thumb/c/cb/TV3.svg/300px-TV3.svg.png" group-title="Undefined",TV3 (1080p) [Geo-blocked]
 https://directes3-tv-cat.3catdirectes.cat/live-content/tv3-hls/master.m3u8
 #EXTINF:-1 tvg-id="TV3CAT.es@SD" tvg-logo="https://upload.wikimedia.org/wikipedia/commons/thumb/9/97/TV3CAT.svg/512px-TV3CAT.svg.png" group-title="Undefined",TV3CAT (1080p) [Geo-blocked]

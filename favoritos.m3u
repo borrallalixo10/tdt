@@ -5,8 +5,6 @@ http://176.65.146.237:8401/play/a095/index.m3u8
 https://d4g9wh8d4wiaw.cloudfront.net/v1/master/3722c60a815c199d9c0ef36c5b73da68a62b09d1/cc-crbrakk0yedqb/La2ES.m3u8
 #EXTINF:-1 tvg-id="TVG.es" tvg-logo="https://i.imgur.com/dvkzH8n.png" group-title="General;Public",Galicia TV Europa (720p)
 https://crtvg-europa.flumotion.cloud/playlist.m3u8
-#EXTINF:-1 tvg-id="Antena 3.es" tvg-logo="https://upload.wikimedia.org/wikipedia/commons/thumb/8/89/Logo_Antena_3_2025_%28Naranja%29.svg/512px-Logo_Antena_3_2025_%28Naranja%29.svg.png" group-title="General",Antena 3 (1080p)
-http://176.65.146.237:8401/play/a0ae/index.m3u8
 #EXTINF:-1 tvg-id="Telecinco.es" tvg-logo="https://upload.wikimedia.org/wikipedia/commons/thumb/f/fc/Telecinco.svg/512px-Telecinco.svg.png" group-title="General",Telecinco (1080p)
 http://176.65.146.237:8401/play/a09r/index.m3u8
 #EXTINF:-1 tvg-id="LaSexta.es@SD" tvg-logo="https://i.imgur.com/aKV5voq.png" group-title="Entertainment",La Sexta (1080p)
@@ -27,8 +25,6 @@ https://dum8zv1rbdjj2.cloudfront.net/v1/master/3722c60a815c199d9c0ef36c5b73da68a
 http://176.65.146.237:8401/play/a0ai/index.m3u8
 #EXTINF:-1 tvg-id="Mega.es" tvg-logo="https://i.imgur.com/Udrt2eK.png" group-title="Entertainment",Mega (1080p)
 http://176.65.146.237:8401/play/a0a5/index.m3u8
-#EXTINF:-1 tvg-id="Be Mad.es" tvg-logo="https://upload.wikimedia.org/wikipedia/commons/thumb/7/70/Be_Mad_TV.svg/512px-Be_Mad_TV.svg.png" group-title="Undefined",Be Mad (1080p)
-http://176.65.146.237:8401/play/a0aj/index.m3u8
 #EXTINF:-1 tvg-id="Neox.es" tvg-logo="https://upload.wikimedia.org/wikipedia/commons/thumb/3/3c/Neox_2023_logo.svg/500px-Neox_2023_logo.svg.png" group-title="Entertainment",Neox (1080p)
 http://176.65.146.237:8401/play/a0ag/index.m3u8
 #EXTINF:-1 tvg-id="Nova.es" tvg-logo="https://i.imgur.com/Vx1F4o5.png" group-title="Lifestyle",Nova (1080p)

@@ -15,8 +15,29 @@ EQUIVALENCIAS_FILE = os.path.join(BASE_DIR, "equivalencias.json")
 # URL fija para DMAX
 DMAX_FIXED_URL = "https://streaming.aurora.enhanced.live/eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpYXQiOjE3NjI0NTE1MzksIm5iZiI6MTc2MjQ1MTUzOSwiZXhwIjoxNzYyNDUxODk5LCJjb3VudHJ5Q29kZSI6ImVzIiwidWlwIjoiNzkuMTE2LjE4Mi4zMyJ9.bzxhLaIKA-3yHdC7ja06aWSYFWGZvJDnEwOrVENOjwU/live/es/b9243cdb24df40128098f3ea25fcf47d/index_3.m3u8"
 
+VARIANT_HINTS = (
+    "internacional",
+    "canarias",
+    "catalunya",
+    "cataluna",
+    "catala",
+    "latin",
+    "latam",
+    "usa",
+)
+
+def normalize_token(value):
+    """Normaliza texto para comparaciones robustas (minúsculas + alfanumérico)."""
+    return re.sub(r'[^a-z0-9]+', '', (value or "").lower())
+
+def extract_channel_name(extinf):
+    """Extrae el nombre visible del canal de una línea #EXTINF."""
+    if "," not in extinf:
+        return ""
+    return extinf.split(",", 1)[1].strip()
+
 def parse_m3u(content):
-    """Parsea una lista M3U y devuelve una lista de (tvg_id, extinf, url)."""
+    """Parsea una lista M3U y devuelve una lista de canales con tvg_id/extinf/url/nombre."""
     raw_lines = content.splitlines()
     lines = [ln for ln in raw_lines]
     channels = []
@@ -27,14 +48,30 @@ def parse_m3u(content):
             extinf = lines[i].rstrip('\r\n')
             # buscar siguiente línea no vacía como URL
             j = i + 1
-            while j < len(lines) and lines[j].strip() == '':
+            url = ""
+            while j < len(lines):
+                candidate = lines[j].strip()
+                if candidate == "":
+                    j += 1
+                    continue
+                if candidate.upper().startswith("#EXTINF"):
+                    break
+                if candidate.startswith("#"):
+                    j += 1
+                    continue
+                url = candidate
                 j += 1
-            url = lines[j].strip() if j < len(lines) else ''
+                break
             # Extraer tvg-id si existe
             tvg_id_match = re.search(r'tvg-id="([^"]+)"', extinf)
             tvg_id = tvg_id_match.group(1) if tvg_id_match else ""
-            channels.append((tvg_id, extinf, url))
-            i = j + 1
+            channels.append({
+                "tvg_id": tvg_id,
+                "extinf": extinf,
+                "url": url,
+                "name": extract_channel_name(extinf),
+            })
+            i = j
         else:
             i += 1
     return channels
@@ -53,16 +90,62 @@ def load_equivalencias(path):
         print(f"Error al leer '{path}': {e}")
         sys.exit(1)
 
-    # Construir mapa tvg-id -> (nombre_normalizado, orden)
-    tvg_id_to_info = {}
+    # Construir lista de reglas de equivalencia
+    equivalencias = []
     for nombre_norm, info in data.items():
         if not isinstance(info, dict):
             continue
         tvg = info.get("tvg_id") or info.get("tvgid") or ""
         orden = info.get("orden", 0)
-        if tvg:
-            tvg_id_to_info[tvg] = (nombre_norm, orden)
-    return tvg_id_to_info
+        try:
+            orden = int(orden)
+        except (TypeError, ValueError):
+            orden = 0
+        equivalencias.append({
+            "key": nombre_norm,
+            "key_norm": normalize_token(nombre_norm),
+            "tvg_id": tvg,
+            "tvg_id_norm": normalize_token(tvg),
+            "tvg_root_norm": normalize_token((tvg.split("@", 1)[0]).split(".", 1)[0]),
+            "orden": orden,
+        })
+    return equivalencias
+
+def match_score(entry, channel):
+    """Devuelve una tupla de score (menor es mejor) o None si no hay match."""
+    ch_tvg = channel["tvg_id"]
+    ch_tvg_norm = normalize_token(ch_tvg)
+    ch_name_norm = normalize_token(channel["name"])
+    target_tvg = entry["tvg_id"]
+    target_tvg_norm = entry["tvg_id_norm"]
+    aliases = [entry["key_norm"], entry["tvg_root_norm"]]
+
+    if target_tvg and ch_tvg == target_tvg:
+        base = 0
+    elif target_tvg_norm and ch_tvg_norm == target_tvg_norm:
+        base = 1
+    else:
+        alias_bases = []
+        for alias in aliases:
+            if not alias:
+                continue
+            if alias == ch_name_norm or alias == ch_tvg_norm:
+                alias_bases.append(2)
+                continue
+            if ch_name_norm.startswith(alias) or ch_tvg_norm.startswith(alias):
+                alias_bases.append(3)
+                continue
+            # Solo permitir "contains" en aliases largos para evitar falsos positivos
+            if len(alias) >= 5 and (alias in ch_name_norm or alias in ch_tvg_norm):
+                alias_bases.append(4)
+        if not alias_bases:
+            return None
+        base = min(alias_bases)
+
+    lower_text = f'{channel["name"]} {ch_tvg}'.lower()
+    variant_penalty = 1 if any(hint in lower_text for hint in VARIANT_HINTS) else 0
+    specificity = len(ch_name_norm) if ch_name_norm else len(ch_tvg_norm)
+    return (base, variant_penalty, specificity)
 
 def main():
     print("📥 Descargando lista de iptv-org...")
@@ -75,28 +158,54 @@ def main():
 
     iptv_channels = parse_m3u(resp.text)
 
-    equivalencias_map = load_equivalencias(EQUIVALENCIAS_FILE)
+    equivalencias = load_equivalencias(EQUIVALENCIAS_FILE)
 
-    # Usamos una lista para permitir órdenes duplicados y conservar todos los canales
+    selected = {}  # key_equivalencia -> datos de mejor match
+    for idx, channel in enumerate(iptv_channels):
+        if not channel["url"]:
+            continue
+        for entry in equivalencias:
+            score = match_score(entry, channel)
+            if score is None:
+                continue
+            current = selected.get(entry["key"])
+            if current is None or score < current["score"]:
+                selected[entry["key"]] = {
+                    "score": score,
+                    "orden": entry["orden"],
+                    "extinf": channel["extinf"],
+                    "url": channel["url"],
+                    "idx": idx,
+                }
+
+    # Lista final de favoritos y seguimiento de canales ya clasificados
     favoritos_list = []  # elementos: (orden, extinf, url)
+    used_indexes = set()
     otros_output = ['#EXTM3U']
 
-    # Agregar manualmente DMAX como canal 9, si no está presente
-    favoritos_list.append((9, '#EXTINF:-1 tvg-id="dmax" group-title="General",DMAX', DMAX_FIXED_URL))
+    missing = []
+    for entry in sorted(equivalencias, key=lambda e: e["orden"]):
+        key = entry["key"]
+        if key.lower() == "dmax":
+            favoritos_list.append((entry["orden"], '#EXTINF:-1 tvg-id="dmax" group-title="General",DMAX', DMAX_FIXED_URL))
+            if key in selected:
+                used_indexes.add(selected[key]["idx"])
+            continue
 
-    for tvg_id, extinf, url in iptv_channels:
-        info = equivalencias_map.get(tvg_id)
-        if info:
-            nombre_norm, orden = info
-            # Si es DMAX y existe URL fija, usarla
-            if nombre_norm.lower() == "dmax" and DMAX_FIXED_URL:
-                url = DMAX_FIXED_URL
-            favoritos_list.append((orden, extinf, url))
+        best = selected.get(key)
+        if best:
+            favoritos_list.append((best["orden"], best["extinf"], best["url"]))
+            used_indexes.add(best["idx"])
         else:
-            otros_output.append(extinf)
-            otros_output.append(url)
+            missing.append(key)
 
-    # Ordenar favoritos por 'orden' (si orden no es int, se ordena como texto)
+    for idx, channel in enumerate(iptv_channels):
+        if idx in used_indexes or not channel["url"]:
+            continue
+        otros_output.append(channel["extinf"])
+        otros_output.append(channel["url"])
+
+    # Ordenar favoritos por 'orden'
     favoritos_list.sort(key=lambda x: x[0])
 
     favoritos_output = ['#EXTM3U']
@@ -110,6 +219,8 @@ def main():
             f.write('\n'.join(favoritos_output) + '\n')
         num_fav = (len(favoritos_output) - 1) // 2
         print(f"✅ Generado favoritos.m3u con {num_fav} canales.")
+        if missing:
+            print(f"⚠️ No se encontraron {len(missing)} favoritos: {', '.join(missing)}")
     except Exception as e:
         print(f"Error al escribir 'favoritos.m3u': {e}")
         sys.exit(1)

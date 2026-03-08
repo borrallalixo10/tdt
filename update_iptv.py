@@ -7,6 +7,7 @@ import sys
 
 # URL de la lista de iptv-org para España
 IPTV_ORG_ES_URL = "https://iptv-org.github.io/iptv/countries/es.m3u"
+TDT_CHANNELS_URL = "https://www.tdtchannels.com/lists/tv.m3u8"
 
 # Archivo de equivalencias (ubicado en el mismo directorio del script)
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -147,6 +148,60 @@ def match_score(entry, channel):
     specificity = len(ch_name_norm) if ch_name_norm else len(ch_tvg_norm)
     return (base, variant_penalty, specificity)
 
+def is_m3u8_url(url):
+    """Comprueba si la URL apunta a un stream m3u8."""
+    return bool(re.search(r"\.m3u8($|[?#])", (url or "").strip(), re.IGNORECASE))
+
+def quality_score(channel):
+    """
+    Extrae una puntuación de calidad aproximada.
+    Mayor valor = mejor calidad.
+    """
+    text = f'{channel.get("name", "")} {channel.get("extinf", "")} {channel.get("url", "")}'.lower()
+
+    if "2160p" in text or "4k" in text or "uhd" in text:
+        return 2160
+    matches = [int(v) for v in re.findall(r"(\d{3,4})p", text)]
+    if matches:
+        return max(matches)
+    if "fhd" in text:
+        return 1080
+    if "hd" in text:
+        return 720
+    if "sd" in text:
+        return 480
+    return 0
+
+def select_best_matches(equivalencias, channels, require_m3u8=False, prefer_quality=False):
+    """
+    Selecciona el mejor canal por cada equivalencia.
+    Si prefer_quality=True, prioriza mayor calidad en caso de empate de matching.
+    """
+    selected = {}
+    for idx, channel in enumerate(channels):
+        if not channel["url"]:
+            continue
+        if require_m3u8 and not is_m3u8_url(channel["url"]):
+            continue
+        for entry in equivalencias:
+            score = match_score(entry, channel)
+            if score is None:
+                continue
+
+            q = quality_score(channel) if prefer_quality else 0
+            rank = (score[0], score[1], -q, score[2], idx)
+            current = selected.get(entry["key"])
+            if current is None or rank < current["rank"]:
+                selected[entry["key"]] = {
+                    "rank": rank,
+                    "orden": entry["orden"],
+                    "extinf": channel["extinf"],
+                    "url": channel["url"],
+                    "idx": idx,
+                    "quality": q,
+                }
+    return selected
+
 def main():
     print("📥 Descargando lista de iptv-org...")
     try:
@@ -157,47 +212,48 @@ def main():
         sys.exit(1)
 
     iptv_channels = parse_m3u(resp.text)
+    print("📥 Descargando lista de respaldo de TDTChannels...")
+    try:
+        resp_tdt = requests.get(TDT_CHANNELS_URL, timeout=20)
+        resp_tdt.raise_for_status()
+        tdt_channels = parse_m3u(resp_tdt.text)
+    except requests.RequestException as e:
+        print(f"⚠️ No se pudo descargar {TDT_CHANNELS_URL}: {e}")
+        tdt_channels = []
 
     equivalencias = load_equivalencias(EQUIVALENCIAS_FILE)
 
-    selected = {}  # key_equivalencia -> datos de mejor match
-    for idx, channel in enumerate(iptv_channels):
-        if not channel["url"]:
-            continue
-        for entry in equivalencias:
-            score = match_score(entry, channel)
-            if score is None:
-                continue
-            current = selected.get(entry["key"])
-            if current is None or score < current["score"]:
-                selected[entry["key"]] = {
-                    "score": score,
-                    "orden": entry["orden"],
-                    "extinf": channel["extinf"],
-                    "url": channel["url"],
-                    "idx": idx,
-                }
+    selected_primary = select_best_matches(equivalencias, iptv_channels, require_m3u8=False, prefer_quality=False)
+    selected_fallback = select_best_matches(equivalencias, tdt_channels, require_m3u8=True, prefer_quality=True)
 
     # Lista final de favoritos y seguimiento de canales ya clasificados
     favoritos_list = []  # elementos: (orden, extinf, url)
     used_indexes = set()
     otros_output = ['#EXTM3U']
+    fallback_used = 0
 
     missing = []
     for entry in sorted(equivalencias, key=lambda e: e["orden"]):
         key = entry["key"]
         if key.lower() == "dmax":
             favoritos_list.append((entry["orden"], '#EXTINF:-1 tvg-id="dmax" group-title="General",DMAX', DMAX_FIXED_URL))
-            if key in selected:
-                used_indexes.add(selected[key]["idx"])
+            if key in selected_primary:
+                used_indexes.add(selected_primary[key]["idx"])
             continue
 
-        best = selected.get(key)
-        if best:
-            favoritos_list.append((best["orden"], best["extinf"], best["url"]))
-            used_indexes.add(best["idx"])
-        else:
-            missing.append(key)
+        best_primary = selected_primary.get(key)
+        if best_primary:
+            favoritos_list.append((best_primary["orden"], best_primary["extinf"], best_primary["url"]))
+            used_indexes.add(best_primary["idx"])
+            continue
+
+        best_fallback = selected_fallback.get(key)
+        if best_fallback:
+            favoritos_list.append((entry["orden"], best_fallback["extinf"], best_fallback["url"]))
+            fallback_used += 1
+            continue
+
+        missing.append(key)
 
     for idx, channel in enumerate(iptv_channels):
         if idx in used_indexes or not channel["url"]:
@@ -219,6 +275,8 @@ def main():
             f.write('\n'.join(favoritos_output) + '\n')
         num_fav = (len(favoritos_output) - 1) // 2
         print(f"✅ Generado favoritos.m3u con {num_fav} canales.")
+        if fallback_used:
+            print(f"ℹ️ Completados {fallback_used} canales desde TDTChannels (m3u8, mejor calidad disponible).")
         if missing:
             print(f"⚠️ No se encontraron {len(missing)} favoritos: {', '.join(missing)}")
     except Exception as e:

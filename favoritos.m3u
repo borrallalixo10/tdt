@@ -11,8 +11,6 @@ http://92.176.119.180:2095/play/a1ee
 http://92.176.119.180:2095/play/a1fq
 #EXTINF:-1 tvg-id="LaSexta.es@SD" tvg-logo="https://i.imgur.com/aKV5voq.png" group-title="Entertainment",La Sexta (1080p)
 http://92.176.119.180:2095/play/a1ef
-#EXTINF:-1 tvg-id="Cuatro.es" tvg-logo="https://i.imgur.com/NYLnABb.png" group-title="General",Cuatro (1080p)
-http://92.176.119.180:2095/play/a1g2
 #EXTINF:-1 tvg-id="Canal 24 horas.es" tvg-logo="https://i.ibb.co/21sXZ3GT/24h.png" group-title="News;Public",Canal 24 Horas (720p)
 https://ztnr.rtve.es/ztnr/1694255.m3u8
 #EXTINF:-1 tvg-id="DMAX.es" group-title="General",DMAX
